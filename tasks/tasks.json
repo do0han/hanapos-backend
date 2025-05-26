@@ -1,0 +1,778 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Initialize Project Repositories",
+      "description": "Set up GitHub repositories for Flutter mobile app, Next.js backend, and project documentation with proper structure and configuration.",
+      "details": "Create three repositories: 'hanapos-mobile' for Flutter app, 'hanapos-backend' for Next.js, and 'hanapos-docs' for documentation. Set up proper .gitignore files, README.md with project overview, and branch protection rules. Configure GitHub Actions for CI/CD pipelines. Initialize Flutter project with null safety and material design 3. Set up Next.js project with TypeScript and API routes structure.",
+      "testStrategy": "Verify repository structures, ensure CI/CD pipelines run successfully on initial commits, validate Flutter and Next.js projects build without errors.",
+      "priority": "high",
+      "dependencies": [],
+      "status": "done",
+      "subtasks": []
+    },
+    {
+      "id": 2,
+      "title": "Set up Supabase Project and Database Schema",
+      "description": "Initialize Supabase project and implement database schema with all required tables for the POS system.",
+      "details": "Create Supabase project with appropriate region (closest to Philippines). Define PostgreSQL schema with tables: users (id, email, role, store_id, created_at), stores (id, name, address, contact, settings), products (id, name, price, cost, category, image_url, store_id, created_at), inventory (product_id, quantity, store_id, updated_at), orders (id, total, payment_method, status, store_id, cashier_id, created_at), order_items (id, order_id, product_id, quantity, price, subtotal), stock_adjustments (id, product_id, quantity_change, reason, performed_by, store_id, created_at). Set up foreign key relationships and indexes for performance optimization.",
+      "testStrategy": "Run SQL validation scripts to verify schema integrity, test CRUD operations on each table, verify foreign key constraints work properly.",
+      "priority": "high",
+      "dependencies": [
+        1
+      ],
+      "status": "done",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Initialize Supabase Project",
+          "description": "Create a new Supabase project and configure the basic settings",
+          "dependencies": [],
+          "details": "Sign up for Supabase if needed, create a new project, note down API keys and URLs, set up project region and pricing plan, and configure initial security settings and policies",
+          "status": "done"
+        },
+        {
+          "id": 2,
+          "title": "Set Up User and Authentication Tables",
+          "description": "Configure authentication system and extend user tables with required fields",
+          "dependencies": [
+            1
+          ],
+          "details": "Enable authentication providers (email, social), customize the auth.users table with additional fields, create profiles table with user-specific data, set up row-level security policies for user data, and test authentication flows\n<info added on 2025-05-22T14:34:29.379Z>\n사용자 인증 및 권한 관리를 위한 테이블과 정책을 설계하고, 필요한 SQL을 생성합니다.\n\n**1. `auth.users` 테이블 확장:**\n\n`auth.users` 테이블에 `store_id`와 `role` 컬럼을 추가하여 사용자의 상점 정보와 역할을 관리합니다.\n\n```sql\n-- store_id와 role 컬럼 추가\nalter table auth.users\nadd column store_id uuid references stores(id),\nadd column role text check (role in ('admin', 'user', 'manager'));\n```\n\n\n**2. `profiles` 테이블 생성:**\n\n사용자별 추가 정보를 저장하기 위해 `profiles` 테이블을 생성합니다.\n\n```sql\n-- profiles 테이블 생성\ncreate table profiles (\n    id uuid references auth.users not null,\n    username text unique,\n    avatar_url text,\n    website text,\n    bio text,\n    joined_at timestamp with time zone default timezone('utc'::text, now()) not null,\n    primary key (id)\n);\n\n-- RLS 활성화\nalter table profiles enable row level security;\n\n-- 정책 설정\ncreate policy \"Profiles are viewable by user only.\"\n    on profiles for select\n    using (auth.uid() = id);\n\ncreate policy \"Users can insert their own profile.\"\n    on profiles for insert\n    with check (auth.uid() = id);\n\ncreate policy \"Users can update own profile.\"\n    on profiles for update\n    using (auth.uid() = id);\n```\n\n\n**3. 기본 RLS 정책 설계:**\n\n`auth.users`와 `profiles` 테이블에 대한 기본 RLS 정책을 설정하여 데이터 접근을 제어합니다.\n\n```sql\n-- auth.users 테이블에 대한 RLS 정책\nalter table auth.users enable row level security;\n\ncreate policy \"Authenticated users can select their own data.\"\n    on auth.users for select\n    using (auth.uid() = id);\n\ncreate policy \"Authenticated users can update their own data.\"\n    on auth.users for update\n    using (auth.uid() = id);\n\n-- profiles 테이블에 대한 RLS 정책은 위에서 이미 설정됨\n```\n\n\n**4. 테스트용 계정 생성:**\n\n테스트를 위해 샘플 사용자를 생성합니다.\n\n```sql\n-- 테스트용 사용자 생성\ninsert into auth.users (id, email, store_id, role)\nvalues\n    ('test-user-id-1', 'testuser1@example.com', 'store-id-1', 'user'),\n    ('test-user-id-2', 'testuser2@example.com', 'store-id-2', 'admin');\n```\n\n\n위의 SQL 스크립트는 Supabase에서 사용자 인증 및 권한 관리를 위한 테이블과 정책을 설정하는 데 필요한 예시입니다. 실제 적용 시에는 프로젝트의 요구사항에 맞게 조정이 필요할 수 있습니다.\n</info added on 2025-05-22T14:34:29.379Z>",
+          "status": "done"
+        },
+        {
+          "id": 3,
+          "title": "Create Product and Inventory Tables",
+          "description": "Design and implement tables for product catalog and inventory management",
+          "dependencies": [
+            1
+          ],
+          "details": "Create products table with all necessary fields (name, description, price, etc.), implement categories and tags tables with relationships, design inventory tracking table with stock levels, create product variants and attributes tables if needed, and set up appropriate access policies",
+          "status": "done"
+        },
+        {
+          "id": 4,
+          "title": "Implement Order Management Tables",
+          "description": "Set up tables for handling customer orders and transactions",
+          "dependencies": [
+            2,
+            3
+          ],
+          "details": "Create orders table with order status and timestamps, implement order_items junction table connecting orders and products, design payment and shipping information tables, set up transaction logging, and configure appropriate access controls",
+          "status": "done"
+        },
+        {
+          "id": 5,
+          "title": "Optimize Database with Foreign Keys and Indexes",
+          "description": "Establish relationships between tables and optimize query performance",
+          "dependencies": [
+            2,
+            3,
+            4
+          ],
+          "details": "Define all foreign key constraints between related tables, create indexes on frequently queried columns, implement database triggers for inventory updates, test query performance and optimize as needed, and document the complete database schema",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Implement Authentication and Authorization",
+      "description": "Set up Supabase Auth with Row Level Security (RLS) policies and Role-Based Access Control (RBAC) for different user types.",
+      "details": "Configure Supabase Auth with email/password authentication. Define user roles: 'owner', 'manager', 'cashier'. Implement RLS policies for each table: owners can access all data for their stores, managers have limited admin capabilities, cashiers can only process sales and view products. Create SQL functions for role assignment and verification. Set up JWT claims for role information. Implement middleware in Next.js to verify authentication and authorization. Create Flutter authentication service to handle login, logout, and session management.",
+      "testStrategy": "Test login/logout flows, verify RLS policies by attempting unauthorized access, test role-based permissions for different user types, ensure JWT tokens contain correct role information.",
+      "priority": "high",
+      "dependencies": [
+        2
+      ],
+      "status": "done",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Configure Supabase Authentication",
+          "description": "Set up and configure Supabase authentication providers and settings",
+          "dependencies": [],
+          "details": "Configure email/password, social providers (Google, GitHub), and magic link authentication in Supabase dashboard. Set up email templates for verification, password reset, and magic links. Configure authentication redirect URLs and security settings including session duration and refresh tokens.",
+          "status": "done"
+        },
+        {
+          "id": 2,
+          "title": "Define User Roles and Permissions",
+          "description": "Create a role-based access control system with clearly defined user roles and permissions",
+          "dependencies": [
+            1
+          ],
+          "details": "Design and implement a role schema in the database (admin, user, guest, etc.). Create a roles table with associated permissions. Implement functions to assign and manage roles. Set up database triggers to automatically assign default roles to new users.",
+          "status": "done"
+        },
+        {
+          "id": 3,
+          "title": "Implement Row Level Security Policies",
+          "description": "Create and test RLS policies for all database tables to enforce proper data access control",
+          "dependencies": [
+            2
+          ],
+          "details": "Define RLS policies for each table based on user roles. Implement policies for CRUD operations (SELECT, INSERT, UPDATE, DELETE). Create helper functions for policy evaluation. Test policies thoroughly with different user roles to ensure proper access control.",
+          "status": "done"
+        },
+        {
+          "id": 4,
+          "title": "Set Up JWT Claims and Middleware",
+          "description": "Configure JWT token claims and implement middleware for authentication verification",
+          "dependencies": [
+            2,
+            3
+          ],
+          "details": "Set up custom JWT claims to include user roles and permissions. Create database functions to manage JWT claims. Implement middleware to verify JWT tokens and extract claims. Set up refresh token rotation for security. Create authentication guard functions for protected routes.",
+          "status": "done"
+        },
+        {
+          "id": 5,
+          "title": "Integrate Authentication with Next.js",
+          "description": "Implement authentication flows and protected routes in the Next.js application",
+          "dependencies": [
+            4
+          ],
+          "details": "Set up authentication context provider. Implement sign-in, sign-up, password reset, and sign-out flows. Create protected route components and HOCs. Implement session persistence and automatic token refresh. Add user profile management features including role visualization.",
+          "status": "done"
+        },
+        {
+          "id": 6,
+          "title": "Implement Flutter Authentication Service",
+          "description": "Create authentication services and UI components for the Flutter mobile application",
+          "dependencies": [
+            4
+          ],
+          "details": "Implement Supabase authentication client in Flutter. Create login, registration, and password reset screens. Set up secure token storage using Flutter Secure Storage. Implement biometric authentication options. Create auth state management using Provider or Bloc. Add deep linking support for email verification and password reset.",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Develop Flutter Authentication UI",
+      "description": "Create login, registration, and password recovery screens for the Flutter mobile app.",
+      "details": "Design and implement login screen with email/password fields, 'Forgot Password' link, and 'Login' button. Create registration screen for store owners with store details. Implement password recovery flow using Supabase Auth. Add form validation for all inputs. Implement secure storage for auth tokens using flutter_secure_storage. Create loading indicators and error handling for auth operations. Design responsive layouts that work well on both phones and tablets.",
+      "testStrategy": "Test form validation for various inputs, verify error messages display correctly, test authentication flow with valid and invalid credentials, verify token storage and retrieval, test UI responsiveness on different screen sizes.",
+      "priority": "high",
+      "dependencies": [
+        3
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 5,
+      "title": "Implement Product Management Backend",
+      "description": "Create Next.js API routes for product CRUD operations with Supabase integration.",
+      "details": "Implement API routes for: GET /api/products (list), GET /api/products/:id (details), POST /api/products (create), PUT /api/products/:id (update), DELETE /api/products/:id (delete). Add filtering, sorting, and pagination for product listing. Implement image upload functionality using Supabase Storage. Add validation for product data. Ensure all routes respect RLS policies and user roles. Implement error handling and appropriate HTTP status codes.",
+      "testStrategy": "Create unit tests for each API route, test with valid and invalid data, verify RLS policies are respected, test pagination and filtering, verify image upload functionality works correctly.",
+      "priority": "medium",
+      "dependencies": [
+        2,
+        3
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 6,
+      "title": "Develop Product Management UI in Flutter",
+      "description": "Create screens for viewing, adding, editing, and deleting products in the Flutter app.",
+      "details": "Implement product list screen with search, filter, and sort capabilities. Create product detail screen showing all product information. Design add/edit product form with validation. Implement image picker and upload functionality. Add confirmation dialog for product deletion. Create state management using Provider or Bloc pattern. Implement offline caching of product data using Hive or SQLite. Design UI for tablet optimization with grid layouts for products.",
+      "testStrategy": "Test product CRUD operations through UI, verify form validation works correctly, test search and filtering functionality, verify offline capabilities work when network is unavailable, test UI responsiveness on different screen sizes.",
+      "priority": "medium",
+      "dependencies": [
+        4,
+        5
+      ],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement State Management Architecture",
+          "description": "Set up the state management solution for the product management application",
+          "dependencies": [],
+          "details": "Choose and implement an appropriate state management solution (e.g., Provider, Bloc, Riverpod). Create the data models for products. Implement the core state logic for CRUD operations. Set up the architecture to handle loading states, errors, and success states.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Develop Product Listing Screen",
+          "description": "Create the main product listing screen with search and filtering capabilities",
+          "dependencies": [
+            1
+          ],
+          "details": "Design and implement the UI for displaying products in a grid/list view. Add search functionality with debounce. Implement filtering options (by category, price, etc.). Create sorting capabilities. Add pull-to-refresh and pagination if needed. Ensure responsive layout works across device sizes.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Create Product Detail View",
+          "description": "Implement the detailed product view screen",
+          "dependencies": [
+            1
+          ],
+          "details": "Design and build the product detail page showing all product information. Implement image gallery/carousel for product images. Add related products section if applicable. Include actions like edit and delete with appropriate confirmations. Ensure smooth navigation between list and detail views.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Build Add/Edit Product Form",
+          "description": "Develop the form for adding new products and editing existing ones",
+          "dependencies": [
+            1,
+            3
+          ],
+          "details": "Create form with validation for all product fields. Implement image picker and upload functionality with preview. Add progress indicators for image uploads. Implement form state persistence during navigation. Ensure keyboard handling and scrolling work properly on all devices.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Implement Offline Caching",
+          "description": "Add offline capabilities to the product management application",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "details": "Implement local database storage (SQLite, Hive, etc.). Create synchronization logic between local and remote data. Add offline indicators in the UI. Implement conflict resolution for offline edits. Ensure app gracefully handles transitions between online and offline states.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Implement Inventory Management Backend",
+      "description": "Create API routes for inventory tracking and stock adjustments.",
+      "details": "Implement API routes for: GET /api/inventory (current stock levels), POST /api/inventory/adjust (manual adjustment), GET /api/inventory/history (adjustment history). Create database triggers to automatically update inventory when orders are processed. Implement validation for stock adjustments. Add low stock alerts functionality. Create transaction-based stock updates to ensure data integrity. Implement batch operations for efficiency.",
+      "testStrategy": "Test inventory API routes with various scenarios, verify database triggers correctly update inventory on orders, test transaction integrity during concurrent operations, verify low stock alerts trigger correctly.",
+      "priority": "medium",
+      "dependencies": [
+        5
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 8,
+      "title": "Develop Inventory Management UI in Flutter",
+      "description": "Create screens for viewing current inventory, making manual adjustments, and viewing adjustment history.",
+      "details": "Implement inventory overview screen showing current stock levels with color-coded indicators for low stock. Create stock adjustment form with reason selection. Design adjustment history screen with filtering options. Implement real-time updates using Supabase Realtime. Add barcode scanning functionality for quick product lookup. Create visual indicators and notifications for low stock items. Implement offline capability for inventory management.",
+      "testStrategy": "Test manual stock adjustments through UI, verify real-time updates appear correctly, test barcode scanning functionality, verify low stock indicators display properly, test offline functionality and synchronization when connection is restored.",
+      "priority": "medium",
+      "dependencies": [
+        6,
+        7
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 9,
+      "title": "Implement POS Sales Backend",
+      "description": "Create API routes for processing sales transactions and managing orders.",
+      "details": "Implement API routes for: POST /api/orders (create order), GET /api/orders (list orders), GET /api/orders/:id (order details), PUT /api/orders/:id (update order status). Create transaction-based order processing to ensure inventory and order data consistency. Implement order validation including stock availability checks. Create hooks for inventory updates on successful orders. Add support for different payment methods (cash, GCash, PayMaya). Implement dummy payment processing initially with hooks for real integration later.",
+      "testStrategy": "Test order creation with various products and quantities, verify inventory updates correctly after orders, test order retrieval and filtering, verify transaction integrity during concurrent operations, test different payment method flows.",
+      "priority": "high",
+      "dependencies": [
+        7
+      ],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Design Order API Routes",
+          "description": "Create RESTful API endpoints for order creation, retrieval, updating, and deletion",
+          "dependencies": [],
+          "details": "Implement routes for: POST /orders (create), GET /orders (list all), GET /orders/:id (get specific), PUT /orders/:id (update), DELETE /orders/:id (delete). Include request/response validation, error handling, and appropriate HTTP status codes. Document API with Swagger/OpenAPI.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Implement Transaction Processing System",
+          "description": "Develop transaction-based processing system that handles inventory updates atomically with order creation",
+          "dependencies": [
+            1
+          ],
+          "details": "Create database transaction wrapper to ensure all operations (order creation, inventory reduction) succeed or fail together. Implement inventory adjustment logic that updates stock levels when orders are processed. Add rollback mechanisms for failed transactions. Include detailed transaction logging for audit purposes.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Build Order Validation System",
+          "description": "Create comprehensive validation system for orders including stock availability checks",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "Implement validation rules: stock availability verification, product existence checks, price verification, quantity validation, and customer information validation. Create reusable validation middleware that can be applied to relevant API routes. Design clear error messages for each validation failure case.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Develop Payment Method Integration Framework",
+          "description": "Create extensible framework for integrating multiple payment processing methods",
+          "dependencies": [
+            1
+          ],
+          "details": "Design payment provider interface/adapter pattern to support multiple payment methods (credit cards, digital wallets, etc.). Implement concrete adapters for at least two payment methods. Include payment verification, processing, and receipt generation. Add configuration system for payment provider credentials and settings.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Implement Order Status Management",
+          "description": "Create system for tracking and updating order status throughout its lifecycle",
+          "dependencies": [
+            1,
+            2,
+            4
+          ],
+          "details": "Define order status workflow (e.g., pending, processing, paid, fulfilled, canceled). Implement status transition logic with validation rules. Create API endpoints for status updates. Add event emission for status changes to support notifications. Implement status history tracking for audit purposes.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Develop POS Sales UI in Flutter",
+      "description": "Create the main POS interface for processing sales with product selection, cart management, and payment processing.",
+      "details": "Implement product selection grid/list with categories and search. Create shopping cart UI with quantity adjustments and item removal. Design payment screen with payment method selection (cash, GCash, PayMaya). Implement cash payment flow with change calculation. Create QR code display for mobile payments. Design receipt generation and display. Implement offline sales capability with synchronization when online. Optimize UI for tablet use with split-screen layout (products on one side, cart on the other).",
+      "testStrategy": "Test complete sales flow from product selection to payment, verify cart operations work correctly, test different payment methods, verify receipt generation, test offline sales and synchronization, verify UI works well on different tablet sizes.",
+      "priority": "high",
+      "dependencies": [
+        8,
+        9
+      ],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Design and implement product selection grid",
+          "description": "Create a responsive product grid with category filtering and search functionality",
+          "dependencies": [],
+          "details": "Develop a Flutter widget for displaying products in a grid layout with image, name, and price. Implement category tabs for filtering products. Add search bar with real-time filtering. Include product detail modal on tap. Ensure smooth scrolling performance with large product catalogs.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Implement shopping cart functionality",
+          "description": "Create a shopping cart panel with item management capabilities",
+          "dependencies": [
+            1
+          ],
+          "details": "Develop a cart widget showing selected items, quantities, and prices. Implement add/remove functionality with quantity adjustments. Add discount application at item and cart level. Include tax calculation logic. Create a state management solution for cart data persistence during the sales process.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Develop payment processing flow",
+          "description": "Create UI for multiple payment methods and transaction processing",
+          "dependencies": [
+            2
+          ],
+          "details": "Implement payment method selection (cash, card, mobile payment). Create change calculation for cash payments. Design card payment integration UI. Add split payment capability for multiple payment methods. Include payment confirmation and error handling screens.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Create receipt generation system",
+          "description": "Implement receipt creation, display, and sharing options",
+          "dependencies": [
+            3
+          ],
+          "details": "Design receipt template with transaction details, items, taxes, and payment info. Add print functionality for thermal printers. Implement email and SMS receipt options. Create receipt history storage and retrieval. Include barcode/QR code generation for receipt identification.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Implement offline sales capability",
+          "description": "Enable POS functionality without internet connection",
+          "dependencies": [
+            2,
+            3,
+            4
+          ],
+          "details": "Create local database for product catalog and transaction storage. Implement sync mechanism for when connection is restored. Design offline payment processing workflows. Add visual indicators for offline mode. Ensure data integrity during sync process with conflict resolution.",
+          "status": "pending"
+        },
+        {
+          "id": 6,
+          "title": "Optimize UI layout for tablet devices",
+          "description": "Create responsive layouts optimized for tablet screen sizes",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "details": "Design master-detail layout for larger screens. Implement split-view for simultaneous product browsing and cart management. Create landscape and portrait mode optimizations. Ensure touch targets are appropriately sized. Add keyboard shortcuts for common actions. Test on various tablet dimensions.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Implement GCash/PayMaya Integration (Dummy)",
+      "description": "Create dummy implementation of GCash and PayMaya payment processing for initial testing.",
+      "details": "Create API routes for: POST /api/payments/gcash and POST /api/payments/paymaya. Implement dummy payment flow that simulates the real API responses. Generate mock QR codes for payment display. Create payment status checking mechanism. Implement webhook endpoints for payment notifications. Design the system to be easily replaceable with real implementation later. Document the expected real API integration points.",
+      "testStrategy": "Test dummy payment flow end-to-end, verify QR code generation works correctly, test payment status checking, verify webhook handling works as expected, ensure the system can handle both successful and failed payments.",
+      "priority": "medium",
+      "dependencies": [
+        9
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 12,
+      "title": "Develop Order History and Management UI",
+      "description": "Create screens for viewing and managing past orders in the Flutter app.",
+      "details": "Implement order history screen with filtering by date, status, and payment method. Create order detail view showing all items, payment information, and timestamps. Design UI for order status updates (for returns or cancellations). Implement search functionality for finding specific orders. Add receipt reprinting capability. Create data export options for order history. Implement offline access to recent order history.",
+      "testStrategy": "Test order history filtering and search, verify order details display correctly, test order status updates, verify receipt reprinting works, test offline access to order history, verify data export functionality.",
+      "priority": "medium",
+      "dependencies": [
+        10
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 13,
+      "title": "Implement Basic Reporting Backend",
+      "description": "Create API routes for generating basic sales and inventory reports.",
+      "details": "Implement API routes for: GET /api/reports/sales/daily, GET /api/reports/sales/weekly, GET /api/reports/sales/monthly, GET /api/reports/inventory/status, GET /api/reports/products/popular. Create SQL queries for aggregating sales data by different time periods. Implement product popularity calculation based on sales volume. Create inventory status report showing current levels and recent adjustments. Add data export functionality in CSV format. Implement caching for report data to improve performance.",
+      "testStrategy": "Test report generation with various date ranges, verify calculations are correct by comparing with raw data, test data export functionality, verify caching improves performance on repeated requests, test with large datasets to ensure performance.",
+      "priority": "medium",
+      "dependencies": [
+        9
+      ],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create Sales Report API Routes",
+          "description": "Implement API endpoints for sales reports with different time period filters (daily, weekly, monthly, yearly).",
+          "dependencies": [],
+          "details": "Create RESTful endpoints that accept date range parameters. Implement handlers for different time aggregations. Include total sales, average order value, and sales growth metrics. Ensure proper error handling and validation for date inputs.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Develop Inventory and Product Popularity Endpoints",
+          "description": "Build API routes for inventory status reports and product popularity rankings.",
+          "dependencies": [],
+          "details": "Create endpoints for current inventory levels, low stock alerts, and reorder suggestions. Implement product popularity metrics based on sales volume and revenue. Add filtering capabilities by product category and time period. Include trend analysis for product performance.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Optimize SQL Queries for Report Aggregations",
+          "description": "Improve database query performance for complex report aggregations and large datasets.",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "Analyze and optimize existing SQL queries using EXPLAIN. Implement appropriate indexes for reporting tables. Consider using materialized views for common report queries. Test query performance with large datasets and implement pagination where necessary.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Implement Report Caching and Export Functionality",
+          "description": "Add caching layer for report data and implement export options in various formats.",
+          "dependencies": [
+            3
+          ],
+          "details": "Set up Redis or similar caching system for frequently accessed reports. Implement cache invalidation strategy based on data updates. Create export functionality for PDF, CSV, and Excel formats. Add background processing for large report generation with email notification when complete.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Develop Reporting UI in Flutter",
+      "description": "Create screens for viewing sales and inventory reports with visualizations.",
+      "details": "Implement dashboard screen with key metrics and charts. Create daily sales report screen with hourly breakdown. Design weekly and monthly sales report screens with trend visualization. Implement popular products report with ranking and sales volume. Create inventory status report with low stock highlights. Add date range selection for all reports. Implement data export functionality. Design responsive layouts that work well on tablets. Use fl_chart or syncfusion_flutter_charts for visualizations.",
+      "testStrategy": "Test report display with various date ranges, verify charts render correctly with different data sets, test date range selection, verify export functionality works, test UI responsiveness on different screen sizes.",
+      "priority": "medium",
+      "dependencies": [
+        12,
+        13
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 15,
+      "title": "Implement Offline Mode and Synchronization",
+      "description": "Enhance the Flutter app to work offline with data synchronization when connection is restored.",
+      "details": "Implement local database using Hive or SQLite for offline data storage. Create synchronization service to handle data conflicts. Implement background synchronization when connection is available. Add queue system for offline operations (sales, inventory adjustments). Create UI indicators for offline mode and synchronization status. Implement conflict resolution strategies for concurrent updates. Add retry mechanism for failed synchronizations. Optimize storage usage for limited device space.",
+      "testStrategy": "Test app functionality in airplane mode, verify data created offline synchronizes correctly when connection is restored, test conflict scenarios with concurrent updates, verify UI indicators show correct status, test synchronization with large amounts of queued data.",
+      "priority": "high",
+      "dependencies": [
+        10,
+        12
+      ],
+      "status": "pending",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement Local Database Storage",
+          "description": "Create a local database structure to store application data for offline use",
+          "dependencies": [],
+          "details": "Set up a local database using SQLite, Room, or other appropriate technology. Design schema to mirror server data structure. Implement CRUD operations for all required data types. Add data migration strategies for schema updates. Include data encryption for sensitive information.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Develop Synchronization Service with Conflict Resolution",
+          "description": "Create a service to handle data synchronization between local and remote databases with conflict resolution capabilities",
+          "dependencies": [
+            1
+          ],
+          "details": "Implement timestamp-based or version-based conflict detection. Create merge strategies for different data types. Design conflict resolution UI for user intervention when needed. Implement data validation before synchronization. Add logging for sync events and conflicts.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Implement Background Synchronization",
+          "description": "Create a background service to periodically sync data when the app is not in active use",
+          "dependencies": [
+            2
+          ],
+          "details": "Set up WorkManager or similar for periodic background sync. Implement battery-aware sync scheduling. Add network-aware sync triggering. Create notification system for important sync events. Ensure OS compatibility across different Android/iOS versions.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Create Offline Operation Queue System",
+          "description": "Develop a queue system to track and manage operations performed while offline",
+          "dependencies": [
+            1
+          ],
+          "details": "Design queue data structure for pending operations. Implement operation serialization and persistence. Create queue processing logic with prioritization. Add transaction support for related operations. Implement queue state management and recovery.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Add UI Indicators for Sync Status",
+          "description": "Implement visual indicators to show synchronization status throughout the application",
+          "dependencies": [
+            2,
+            3,
+            4
+          ],
+          "details": "Create sync status icons and animations. Implement toast/snackbar notifications for sync events. Add detailed sync history view. Design offline mode visual indicators. Ensure accessibility compliance for all status indicators.",
+          "status": "pending"
+        },
+        {
+          "id": 6,
+          "title": "Implement Retry Mechanism for Failed Synchronizations",
+          "description": "Create an intelligent retry system to handle failed synchronization attempts",
+          "dependencies": [
+            2,
+            4
+          ],
+          "details": "Implement exponential backoff algorithm for retries. Create error categorization to determine retry strategy. Add manual retry triggers in UI. Implement persistent failure tracking. Design circuit breaker pattern to prevent excessive retries.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Implement User and Role Management",
+      "description": "Create functionality for store owners to manage staff accounts and permissions.",
+      "status": "deferred",
+      "dependencies": [
+        3
+      ],
+      "priority": "medium",
+      "details": "Implement API routes for: GET /api/users, POST /api/users, PUT /api/users/:id, DELETE /api/users/:id. Create Flutter UI for user management including user creation, role assignment, and deactivation. Implement role-based permission checks throughout the app. Create user profile management screen. Add audit logging for security-sensitive operations. Implement password reset functionality for administrators. Ensure all operations respect RLS policies.",
+      "testStrategy": "Test user CRUD operations, verify role assignments work correctly, test permission checks throughout the app, verify audit logging captures relevant events, test password reset functionality.",
+      "subtasks": []
+    },
+    {
+      "id": 17,
+      "title": "Implement Store Settings and Configuration",
+      "description": "Create functionality for configuring store details, tax rates, and application preferences.",
+      "status": "deferred",
+      "dependencies": [
+        3
+      ],
+      "priority": "medium",
+      "details": "Implement API routes for: GET /api/stores/:id, PUT /api/stores/:id, GET /api/settings, PUT /api/settings. Create Flutter UI for store profile management including name, address, contact information, and logo. Implement settings screen for configuring tax rates, receipt format, and application preferences. Add theme selection functionality. Create backup and restore functionality for store data. Implement settings synchronization across devices.",
+      "testStrategy": "Test store profile updates, verify settings changes apply correctly throughout the app, test theme switching, verify backup and restore functionality works correctly, test settings synchronization across multiple devices.",
+      "subtasks": []
+    },
+    {
+      "id": 18,
+      "title": "Implement Receipt Generation and Printing",
+      "description": "Create functionality for generating digital receipts and printing physical receipts.",
+      "status": "deferred",
+      "dependencies": [
+        10
+      ],
+      "priority": "medium",
+      "details": "Implement receipt template system with customizable fields. Create PDF generation for digital receipts. Implement email receipt functionality. Add support for Bluetooth thermal printers using flutter_bluetooth_printer or similar library. Create receipt preview screen. Implement receipt customization options in settings. Add QR code on receipts for digital verification. Support multiple receipt formats based on local requirements.",
+      "testStrategy": "Test receipt generation with various order types, verify PDF generation works correctly, test email receipt functionality, test Bluetooth printer integration with supported devices, verify customization options affect receipt format correctly.",
+      "subtasks": []
+    },
+    {
+      "id": 19,
+      "title": "Implement Data Backup and Recovery",
+      "description": "Create functionality for backing up and restoring store data.",
+      "status": "deferred",
+      "dependencies": [
+        15
+      ],
+      "priority": "medium",
+      "details": "Implement API routes for: POST /api/backup, GET /api/backup/list, POST /api/backup/restore. Create scheduled automatic backup functionality. Implement manual backup trigger in settings. Add backup encryption for security. Create restore functionality with conflict resolution. Implement backup storage using Supabase Storage. Add backup verification to ensure data integrity. Create UI for backup management including download, delete, and restore operations.",
+      "testStrategy": "Test manual and automatic backup creation, verify backup encryption and decryption works correctly, test restore functionality with various scenarios including conflicts, verify backup verification detects corrupted backups, test UI for backup management.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement Backup API Routes",
+          "description": "Create RESTful API endpoints for backup operations including initiating backups, retrieving backup status, and listing available backups.",
+          "dependencies": [],
+          "details": "Develop API routes with proper authentication and authorization checks. Include endpoints for: GET /backups (list all backups), POST /backups (create new backup), GET /backups/:id (get backup details), DELETE /backups/:id (remove backup). Implement request validation and appropriate error handling.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Develop Scheduled and Manual Backup Functionality",
+          "description": "Implement both automated scheduled backups and user-triggered manual backup capabilities.",
+          "dependencies": [
+            1
+          ],
+          "details": "Create a scheduler service using cron jobs for automated backups with configurable frequency. Implement manual backup triggering through the API. Include progress tracking, notification system for backup completion/failure, and configurable retention policies.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Implement Backup Encryption and Verification",
+          "description": "Add encryption to backup files and implement verification mechanisms to ensure backup integrity.",
+          "dependencies": [
+            2
+          ],
+          "details": "Implement AES-256 encryption for backup files with secure key management. Create checksums for all backup files to verify integrity. Add a verification process that runs after backup completion to validate the backup can be successfully restored. Log all verification results.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Create Restore Functionality with Conflict Resolution",
+          "description": "Develop the ability to restore from backups with mechanisms to handle data conflicts.",
+          "dependencies": [
+            3
+          ],
+          "details": "Implement restore API endpoints and service layer. Create conflict detection algorithms to identify data that has changed since backup. Develop resolution strategies: automatic merging where possible, flagging for manual resolution where needed. Include a dry-run option to preview restore effects without applying changes.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Build Backup Management UI",
+          "description": "Create a user interface for managing backups, scheduling, and restoration.",
+          "dependencies": [
+            1,
+            2,
+            4
+          ],
+          "details": "Design and implement UI components for: viewing backup history with filtering options, configuring backup schedules, initiating manual backups, monitoring backup progress, restoring from backups with conflict resolution interface, and managing backup retention policies. Include appropriate confirmation dialogs for critical operations.",
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "title": "Perform Integration Testing and Deployment",
+      "description": "Conduct comprehensive testing of the entire system and prepare for deployment.",
+      "status": "deferred",
+      "dependencies": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "priority": "high",
+      "details": "Create end-to-end test scenarios covering all major user flows. Implement integration tests using Flutter integration_test package. Perform load testing on the backend API. Conduct security testing including authentication, authorization, and data protection. Create deployment scripts for Vercel (Next.js) and app stores (Flutter). Prepare documentation for users and administrators. Set up monitoring and error tracking using Sentry or similar service. Create rollback procedures for failed deployments.",
+      "testStrategy": "Run automated end-to-end tests covering all major user flows, perform manual testing on various devices, conduct security penetration testing, verify deployment procedures work correctly in staging environment, test monitoring and error tracking functionality.",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Create End-to-End Test Scenarios",
+          "description": "Develop comprehensive test scenarios that cover all critical user journeys through the system",
+          "dependencies": [],
+          "details": "Identify key user flows, create test cases that validate complete business processes, include edge cases and error scenarios, and ensure coverage of all integrated components. Document expected outcomes for each scenario.",
+          "status": "pending"
+        },
+        {
+          "id": 2,
+          "title": "Implement Integration Tests",
+          "description": "Code and configure automated integration tests based on the defined scenarios",
+          "dependencies": [
+            1
+          ],
+          "details": "Set up testing frameworks, implement tests that verify component interactions, create test data fixtures, and ensure proper test isolation. Focus on API contracts, database interactions, and third-party service integrations.",
+          "status": "pending"
+        },
+        {
+          "id": 3,
+          "title": "Conduct Load and Security Testing",
+          "description": "Perform stress testing, load testing, and security vulnerability assessments",
+          "dependencies": [
+            2
+          ],
+          "details": "Configure load testing tools, simulate high traffic scenarios, identify performance bottlenecks, run security scans, test for common vulnerabilities (OWASP Top 10), and document findings with remediation recommendations.",
+          "status": "pending"
+        },
+        {
+          "id": 4,
+          "title": "Prepare Deployment Scripts",
+          "description": "Create automated deployment pipelines and scripts for consistent releases",
+          "dependencies": [
+            2
+          ],
+          "details": "Set up CI/CD configuration, create infrastructure-as-code scripts, implement blue-green deployment strategy, configure environment variables, and develop rollback procedures in case of deployment failures.",
+          "status": "pending"
+        },
+        {
+          "id": 5,
+          "title": "Create Deployment Documentation",
+          "description": "Develop comprehensive documentation for the deployment process and system architecture",
+          "dependencies": [
+            4
+          ],
+          "details": "Document system architecture, deployment procedures, configuration requirements, environment setup instructions, and create troubleshooting guides. Include diagrams and step-by-step instructions for future reference.",
+          "status": "pending"
+        },
+        {
+          "id": 6,
+          "title": "Set Up Monitoring and Error Tracking",
+          "description": "Implement monitoring tools and error tracking systems for production environment",
+          "dependencies": [
+            4,
+            5
+          ],
+          "details": "Configure application performance monitoring, set up error logging and alerting, create dashboards for key metrics, establish error notification channels, and document incident response procedures for the operations team.",
+          "status": "pending"
+        }
+      ]
+    }
+  ]
+}

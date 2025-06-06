@@ -174,7 +174,48 @@
         3
       ],
       "status": "in-progress",
-      "subtasks": []
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Implement Basic CRUD API Routes for Products",
+          "description": "Create the foundational API endpoints for product management including GET, POST, PUT, and DELETE operations.",
+          "dependencies": [],
+          "details": "Develop RESTful API routes for product management:\n- GET /api/products (list all products)\n- GET /api/products/:id (get single product)\n- POST /api/products (create new product)\n- PUT /api/products/:id (update product)\n- DELETE /api/products/:id (delete product)\nEnsure proper database schema design with necessary fields like name, description, price, inventory, etc. Set up appropriate RLS policies in Supabase.",
+          "status": "done"
+        },
+        {
+          "id": 2,
+          "title": "Implement Filtering, Sorting, and Pagination",
+          "description": "Enhance the product listing API with filtering, sorting, and pagination capabilities to handle large product catalogs efficiently.",
+          "dependencies": [
+            1
+          ],
+          "details": "Extend the GET /api/products endpoint to support:\n- Query parameters for filtering (category, price range, availability)\n- Sorting options (price, name, date added)\n- Pagination with limit and offset parameters\n- Include metadata in response (total count, page info)\nOptimize database queries for performance with proper indexing.",
+          "status": "done"
+        },
+        {
+          "id": 3,
+          "title": "Implement Image Upload with Supabase Storage",
+          "description": "Create functionality to handle product image uploads, storage, and retrieval using Supabase Storage.",
+          "dependencies": [
+            1
+          ],
+          "details": "Develop image handling features:\n- Create API endpoint for image uploads\n- Configure Supabase Storage buckets with appropriate permissions\n- Implement image processing (resizing, optimization)\n- Store image references in product records\n- Handle multiple images per product\n- Implement image deletion when products are removed",
+          "status": "done"
+        },
+        {
+          "id": 4,
+          "title": "Implement Validation and Error Handling",
+          "description": "Add comprehensive input validation and error handling to all product management API routes.",
+          "dependencies": [
+            1,
+            2,
+            3
+          ],
+          "details": "Enhance API robustness with:\n- Input validation for all routes (data types, required fields, value ranges)\n- Custom error messages and status codes\n- Consistent error response format\n- Validation for image file types and sizes\n- Transaction handling for operations affecting multiple resources\n- Logging of errors for debugging",
+          "status": "done"
+        }
+      ]
     },
     {
       "id": 6,

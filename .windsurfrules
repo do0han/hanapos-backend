@@ -472,3 +472,11 @@ alwaysApply: true
   - Document breaking changes
 
 Follow WINDSURF_RULES for proper rule formatting and structure of windsurf rule sections.
+
+# 민감정보 커밋 금지 규칙
+- .env, .env.example, .cursor/mcp.json, config.json 등 환경설정/예시 파일에는 실제 API Key, 비밀번호, 토큰 등 민감정보를 절대 커밋하지 않는다.
+- 반드시 예시값(예: YOUR_KEY_HERE, <YOUR_API_KEY>)만 남긴다.
+- 실수로 커밋한 경우 filter-branch, BFG 등으로 과거 커밋까지 완전히 삭제한다.
+- git add/commit 전 git status로 포함 파일을 항상 확인한다.
+- .gitignore에 .env, 실제 secret 파일 등 반드시 추가한다.
+- GitHub push protection에 걸리면 반드시 과거 커밋까지 정리한다.
